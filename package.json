@@ -1,0 +1,37 @@
+{
+  "name": "env-src",
+  "version": "0.1.0",
+  "description": "Set environment variables from various sources",
+  "author": "Kengo Nakatsuka <kengo.nakatsuka@gmail.com>",
+  "bugs": {
+    "url": "https://github.com/nak2k/node-env-src/issues"
+  },
+  "dependencies": {
+    "run-parallel": "^1.1.9"
+  },
+  "devDependencies": {
+    "aws-sdk": "^2.296.0",
+    "tape": "^4.9.1"
+  },
+  "homepage": "https://github.com/nak2k/node-env-src",
+  "keywords": [
+    "aws",
+    "env",
+    "ssm"
+  ],
+  "license": "MIT",
+  "main": "lib",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nak2k/node-env-src.git"
+  },
+  "scripts": {
+    "prepublishOnly": "npm test",
+    "postpublish": "npm-sns",
+    "test": "tape test/*.js"
+  },
+  "files": [
+    "README.md",
+    "lib/"
+  ]
+}
