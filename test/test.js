@@ -2,8 +2,6 @@ const test = require('tape');
 const { envSrc } = require('..');
 const AWS = require('aws-sdk');
 
-AWS.config.update({ region: process.env.AWS_REGION || 'us-west-2' });
-
 test('test', t => {
   t.plan(4);
 
