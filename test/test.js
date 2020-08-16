@@ -3,7 +3,7 @@ const { envSrc } = require('..');
 const AWS = require('aws-sdk');
 
 test('test', t => {
-  t.plan(4);
+  t.plan(3);
 
   envSrc({
     json: {
@@ -14,13 +14,13 @@ test('test', t => {
       path: '/test-env-src',
       recursive: true,
     },
-  }, err => {
-    t.error(err);
-
+  }).then(() => {
     const { env } = process;
 
     t.equal(env.JSON_FOO, 'foo');
     t.equal(env.SSM_FOO, 'foo');
     t.equal(env.SSM_BAR, 'bar');
+  }).catch(err => {
+    t.error(err);
   });
 });

@@ -10,10 +10,10 @@ npm i env-src
 
 ## Usage
 
-``` javascript
-const { envSrc } = require('env-src');
+``` typescript
+import { envSrc } from 'env-src';
 
-envSrc([
+await envSrc([
   {
     json: {
       path: 'path/to/env.json',
@@ -26,17 +26,13 @@ envSrc([
       withDecryption: true,
     },
   },
-], err => {
-  // ...
-});
+];
 ```
 
-## envSrc(options, callback)
+## envSrc(options)
 
 - `options`
   - An object of source definitions, or an array of the one.
-- `callback(err)`
-  - A function that is called when setting environment variables is completed or an error occurs.
 
 The object of source definitions has the following keys:
 

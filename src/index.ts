@@ -1,6 +1,7 @@
-import parallel = require('run-parallel');
-import { readFile } from 'fs';
+import { promises } from 'fs';
 import type { SSM } from 'aws-sdk';
+
+const { readFile } = promises;
 
 export interface EnvSrcJsonOptions {
   path: string;
@@ -21,60 +22,43 @@ interface EnvObj {
   [name: string]: string;
 }
 
-type EnvObjCallback = (err: Error | null, env?: EnvObj) => void;
-
 let ssm: SSM;
 
-export function envSrc(options: EnvSrcOption | EnvSrcOption[], callback: EnvObjCallback) {
+export async function envSrc(options: EnvSrcOption | EnvSrcOption[]): Promise<void> {
   const options_ = Array.prototype.concat(options) as EnvSrcOption[];
 
   const tasks = options_.reduce((tasks, option) => {
     Object.keys(option).map((type) => {
       if (type === 'json') {
-        tasks.push(envSrcJson.bind(null, option.json!));
+        tasks.push(envSrcJson(option.json!));
       } else if (type === 'ssm') {
-        tasks.push(envSrcSsm.bind(null, option.ssm!));
+        tasks.push(envSrcSsm(option.ssm!));
       } else {
-        tasks.push((callback: parallel.TaskCallback<EnvObj>) =>
-          callback(new Error(`Unknown source type '${type}'`)));
+        throw new Error(`Unknown source type '${type}'`);
       }
     });
 
     return tasks;
-  }, [] as parallel.Task<EnvObj>[]);
+  }, [] as Promise<void>[]);
 
-  parallel(tasks, (err, result) => {
-    if (err) {
-      return callback(err);
-    }
-
-    result.forEach(env => {
-      Object.keys(env).forEach(key => {
-        if (process.env[key] === undefined) {
-          process.env[key] = env[key];
-        }
-      });
-    });
-
-    callback(null);
-  });
+  await Promise.all(tasks);
 }
 
-function envSrcJson(options: EnvSrcJsonOptions, callback: EnvObjCallback) {
-  readFile(options.path, 'utf8', (err, data) => {
-    if (err) {
-      return callback(err);
-    }
-
-    try {
-      callback(null, JSON.parse(data));
-    } catch (err) {
-      callback(err);
+function applyEnv(env: EnvObj) {
+  Object.keys(env).forEach(key => {
+    if (process.env[key] === undefined) {
+      process.env[key] = env[key];
     }
   });
 }
 
-function envSrcSsm(options: EnvSrcSsmOptions, callback: EnvObjCallback) {
+export async function envSrcJson(options: EnvSrcJsonOptions): Promise<void> {
+  const data = await readFile(options.path, 'utf8');
+
+  applyEnv(JSON.parse(data));
+}
+
+export async function envSrcSsm(options: EnvSrcSsmOptions): Promise<void> {
   ssm || (ssm = new (require('aws-sdk')).SSM());
 
   const params = {
@@ -83,23 +67,21 @@ function envSrcSsm(options: EnvSrcSsmOptions, callback: EnvObjCallback) {
     WithDecryption: options.withDecryption,
   };
 
-  ssm.getParametersByPath(params, (err, data) => {
-    if (err) {
-      return callback(err);
-    }
+  const data = await ssm.getParametersByPath(params).promise();
 
-    const { Parameters } = data;
+  const { Parameters } = data;
 
-    if (!Parameters) {
-      return callback(null, {});
-    }
+  if (!Parameters) {
+    return;
+  }
 
-    callback(null, Parameters.reduce((env, { Name, Value }) => {
-      Name = Name!.substr(options.path.length + 1).replace('/', '_');
+  const env = Parameters.reduce((env, { Name, Value }) => {
+    Name = Name!.substr(options.path.length + 1).replace('/', '_');
 
-      env[Name] = Value!;
+    env[Name] = Value!;
 
-      return env;
-    }, {} as EnvObj));
-  });
+    return env;
+  }, {} as EnvObj);
+
+  applyEnv(env);
 }
