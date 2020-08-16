@@ -1,6 +1,6 @@
 {
   "name": "env-src",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Set environment variables from various sources",
   "author": "Kengo Nakatsuka <kengo.nakatsuka@gmail.com>",
   "bugs": {
