@@ -9,8 +9,8 @@ export interface EnvSrcJsonOptions {
 
 export interface EnvSrcSsmOptions {
   path: string;
-  recursive: boolean;
-  withDecryption: boolean;
+  recursive?: boolean;
+  withDecryption?: boolean;
 }
 
 export interface EnvSrcOption {
